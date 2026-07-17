@@ -55,9 +55,11 @@ Already cloned it yourself? Just run `./install.sh` from the folder — same thi
 
 ## Install (AI agent — Claude Code, Codex, etc.)
 
-Paste this to your agent:
+Just tell your agent:
 
 > Install https://github.com/fabioparisi/anydownload following the AGENT INSTALL steps in its README.
+
+Nothing else to paste: the agent runs everything itself. If it has GUI control (computer use), the install can be fully hands-free; otherwise you'll be asked for one click at the end.
 
 <details>
 <summary><b>AGENT INSTALL — exact steps for an LLM agent</b></summary>
@@ -85,7 +87,12 @@ Everything is automated except one GUI click that Chrome does not allow scriptin
 
    Expected: `{'ok': False, 'error': 'invalid request'}` — that means the stdio protocol is alive.
 
-3. **Ask the user for the one manual click** (you cannot do this step): in the `chrome://extensions` tab that just opened, enable **Developer mode** (toggle, top right), click **Load unpacked**, and select the `anydownload` folder that just opened in Finder. No reload needed afterwards — the host is already authorized.
+3. **Load the extension.** This is a GUI action in Chrome that cannot be scripted via CLI or DOM (`chrome://extensions` is off-limits to extensions and AppleScript). Two paths:
+
+   - **You have desktop GUI control** (computer-use tools that can click inside Chrome): do it yourself. Focus the `chrome://extensions` tab that step 1 opened, enable the **Developer mode** toggle (top right) if off, click **Load unpacked**, then in the native file dialog press **Cmd+Shift+G**, type `~/anydownload`, press **Enter** to jump there and **Enter** again to select the folder. Verify the AnyDownload card appears with ID `eagdongheofjndbgdefbjhfiejannkok`.
+   - **No GUI control** (or clicks in browsers are restricted): ask the user for this one click — in the `chrome://extensions` tab that just opened: **Developer mode** on (top right) → **Load unpacked** → select the `anydownload` folder that just opened in Finder.
+
+   Either way, no reload is needed afterwards — the native host is already authorized for the pinned ID.
 
 4. **Tell the user to test**: right-click any video → **AnyDownload ▸ Download (best quality)**. The file lands in `~/Downloads` and a Chrome notification confirms completion.
 
