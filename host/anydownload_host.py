@@ -55,8 +55,12 @@ def main():
     if action == "geturl":
         # Best muxed (single-file) stream: the highest quality a browser tab
         # can actually play. Split DASH video+audio would need merging.
+        # Prefer a direct progressive file; HLS/DASH only when nothing else
+        # exists (the extension then plays it in its internal hls.js player).
         proc = subprocess.run(
-            [which("yt-dlp"), "--no-playlist", "-f", "b", "-g", url],
+            [which("yt-dlp"), "--no-playlist",
+             "-f", "b[protocol!*=m3u8][protocol!*=dash]/b[protocol!*=dash]/b",
+             "-g", url],
             capture_output=True, text=True,
         )
         lines = [l for l in proc.stdout.strip().splitlines() if l]

@@ -111,12 +111,20 @@ function openBest(info, tab, fallbackUrl) {
   let done = false;
   port.onMessage.addListener((msg) => {
     done = true;
-    chrome.tabs.create({ url: msg.ok && msg.url ? msg.url : fallbackUrl });
+    openStream(msg.ok && msg.url ? msg.url : fallbackUrl);
   });
   port.onDisconnect.addListener(() => {
-    if (!done) chrome.tabs.create({ url: fallbackUrl });
+    if (!done) openStream(fallbackUrl);
   });
   port.postMessage({ action: "geturl", url: sourceUrl });
+}
+
+// HLS playlists can't play in a plain tab — route them to the bundled player.
+function openStream(url) {
+  const target = /\.m3u8($|\?)/.test(url)
+    ? chrome.runtime.getURL(`player.html?src=${encodeURIComponent(url)}`)
+    : url;
+  chrome.tabs.create({ url: target });
 }
 
 async function searchFrame(tab, engineUrl) {
