@@ -55,7 +55,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!url) return notify("AnyDownload", "No media or URL found here.");
   switch (info.menuItemId) {
     case "open":
-      chrome.tabs.create({ url });
+      openBest(info, tab, url);
       break;
     case "copy":
       copyToClipboard(tab, url);
@@ -98,6 +98,25 @@ function download(url, format) {
     }
   });
   port.postMessage({ action: "download", url, format });
+}
+
+// Open the highest-quality stream, not whatever variant the player happened to
+// be using: ask yt-dlp to resolve the best tab-playable URL from the page,
+// fall back to the raw src if the host is unreachable or the site unsupported.
+function openBest(info, tab, fallbackUrl) {
+  const m = mediaUnderCursor.get(tab?.id);
+  const sourceUrl = info.linkUrl || m?.pageUrl || info.pageUrl || tab?.url || fallbackUrl;
+  notify("AnyDownload", "Resolving best quality…");
+  const port = chrome.runtime.connectNative(HOST);
+  let done = false;
+  port.onMessage.addListener((msg) => {
+    done = true;
+    chrome.tabs.create({ url: msg.ok && msg.url ? msg.url : fallbackUrl });
+  });
+  port.onDisconnect.addListener(() => {
+    if (!done) chrome.tabs.create({ url: fallbackUrl });
+  });
+  port.postMessage({ action: "geturl", url: sourceUrl });
 }
 
 async function searchFrame(tab, engineUrl) {

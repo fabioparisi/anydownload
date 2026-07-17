@@ -47,8 +47,23 @@ def main():
     msg = read_msg()
     url = msg.get("url", "")
     fmt = msg.get("format", "best")
+    action = msg.get("action", "download")
     if not url.startswith(("http://", "https://")) or fmt not in FORMATS:
         send({"ok": False, "error": "invalid request"})
+        return
+
+    if action == "geturl":
+        # Best muxed (single-file) stream: the highest quality a browser tab
+        # can actually play. Split DASH video+audio would need merging.
+        proc = subprocess.run(
+            [which("yt-dlp"), "--no-playlist", "-f", "b", "-g", url],
+            capture_output=True, text=True,
+        )
+        lines = [l for l in proc.stdout.strip().splitlines() if l]
+        if proc.returncode == 0 and lines:
+            send({"ok": True, "url": lines[0]})
+        else:
+            send({"ok": False, "error": proc.stderr[-500:] or "no stream found"})
         return
 
     cmd = [
