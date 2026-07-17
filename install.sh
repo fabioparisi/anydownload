@@ -1,9 +1,9 @@
 #!/bin/bash
-# Installs the yt-dlp native messaging host for the Media Tools extension (macOS / Google Chrome).
+# Installs the yt-dlp native messaging host for the AnyDownload extension (macOS / Google Chrome).
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-HOST_NAME="com.mediatools.ytdlp"
+HOST_NAME="com.anydownload.ytdlp"
 TARGET_DIR="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
 
 for bin in yt-dlp ffmpeg; do
@@ -19,13 +19,13 @@ if [ -z "$EXT_ID" ]; then
   read -rp "Paste the extension ID shown on its card: " EXT_ID
 fi
 
-chmod +x "$DIR/host/media_tools_host.py"
+chmod +x "$DIR/host/anydownload_host.py"
 mkdir -p "$TARGET_DIR"
 cat > "$TARGET_DIR/$HOST_NAME.json" <<EOF
 {
   "name": "$HOST_NAME",
-  "description": "yt-dlp bridge for the Media Tools extension",
-  "path": "$DIR/host/media_tools_host.py",
+  "description": "yt-dlp bridge for the AnyDownload extension",
+  "path": "$DIR/host/anydownload_host.py",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://$EXT_ID/"]
 }

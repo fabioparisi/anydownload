@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native messaging host for the Media Tools Chrome extension.
+"""Native messaging host for the AnyDownload Chrome extension.
 
 Reads one length-prefixed JSON message from stdin, runs yt-dlp,
 writes one length-prefixed JSON reply to stdout. Stdlib only.

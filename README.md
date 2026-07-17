@@ -1,4 +1,4 @@
-# Media Tools
+# AnyDownload
 
 Right-click any **video or audio** in Chrome — even when it's buried under overlays or the site blocks the context menu — and open it, copy its real URL, or download it with **yt-dlp**.
 
@@ -9,7 +9,7 @@ Inspired by [dessant/search-by-image](https://github.com/dessant/search-by-image
 Right-click on (or near) any player:
 
 ```
-Media Tools
+AnyDownload
 ├── Open media in new tab
 ├── Copy media URL
 ├── Download (best quality)
@@ -42,7 +42,7 @@ Chrome extensions can't run local programs directly, so downloads go through a t
 
 4. Reload the extension. Done.
 
-`install.sh` just writes the native-host manifest to `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/` pointing at `host/media_tools_host.py`, allowed only for your extension ID.
+`install.sh` just writes the native-host manifest to `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/` pointing at `host/anydownload_host.py`, allowed only for your extension ID.
 
 ## Limits
 
@@ -57,7 +57,7 @@ Chrome extensions can't run local programs directly, so downloads go through a t
 | `manifest.json` | MV3 extension manifest |
 | `content.js` | Finds media under the cursor, unblocks right-click |
 | `background.js` | Context menus, notifications, talks to the native host |
-| `host/media_tools_host.py` | Runs yt-dlp, replies over stdio |
+| `host/anydownload_host.py` | Runs yt-dlp, replies over stdio |
 | `install.sh` | Registers the native host for your extension ID |
 
 ## License

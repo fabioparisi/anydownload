@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Media Tools",
+  "name": "AnyDownload",
   "version": "1.0.0",
   "description": "Right-click any video or audio - even under overlays or on sites that block the context menu - to open, copy or download it with yt-dlp.",
   "permissions": ["contextMenus", "nativeMessaging", "notifications", "activeTab", "scripting"],

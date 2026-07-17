@@ -1,4 +1,4 @@
-const HOST = "com.mediatools.ytdlp";
+const HOST = "com.anydownload.ytdlp";
 
 // tabId -> media info reported by the content script on last right-click
 const mediaUnderCursor = new Map();
@@ -20,7 +20,7 @@ const MENUS = [
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({ id: "parent", title: "Media Tools", contexts: ["all"] });
+  chrome.contextMenus.create({ id: "parent", title: "AnyDownload", contexts: ["all"] });
   for (const [id, title] of MENUS) {
     chrome.contextMenus.create({ id, parentId: "parent", title, contexts: ["all"] });
   }
@@ -37,7 +37,7 @@ function resolveUrl(info, tab) {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   const url = resolveUrl(info, tab);
-  if (!url) return notify("Media Tools", "No media or URL found here.");
+  if (!url) return notify("AnyDownload", "No media or URL found here.");
   switch (info.menuItemId) {
     case "open":
       chrome.tabs.create({ url });
@@ -60,12 +60,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 function copyToClipboard(tab, text) {
   chrome.tabs
     .sendMessage(tab.id, { type: "copy", text })
-    .then((r) => notify("Media Tools", r?.ok ? "URL copied." : text))
-    .catch(() => notify("Media Tools", text));
+    .then((r) => notify("AnyDownload", r?.ok ? "URL copied." : text))
+    .catch(() => notify("AnyDownload", text));
 }
 
 function download(url, format) {
-  notify("Media Tools", `Sending to yt-dlp (${format})…`);
+  notify("AnyDownload", `Sending to yt-dlp (${format})…`);
   const port = chrome.runtime.connectNative(HOST);
   let gotReply = false;
   port.onMessage.addListener((msg) => {
@@ -79,7 +79,7 @@ function download(url, format) {
   port.onDisconnect.addListener(() => {
     if (!gotReply) {
       const err = chrome.runtime.lastError?.message || "no response";
-      notify("Media Tools", `Native host not reachable (${err}). Run install.sh and reload the extension.`);
+      notify("AnyDownload", `Native host not reachable (${err}). Run install.sh and reload the extension.`);
     }
   });
   port.postMessage({ action: "download", url, format });
