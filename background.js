@@ -132,16 +132,49 @@ async function searchFrame(tab, engineUrl) {
     const m = mediaUnderCursor.get(tab.id);
     const shot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
     const frame = m?.rect ? await crop(shot, m.rect, m.dpr || 1) : shot;
-    // Copy BEFORE opening the tab: clipboard writes need the page focused.
-    const r = await chrome.tabs.sendMessage(tab.id, { type: "copy-image", dataUrl: frame }).catch(() => null);
-    await chrome.tabs.create({ url: engineUrl });
-    notify(
-      "AnyDownload",
-      r?.ok ? "Frame copied — paste it (Cmd+V) into the search page." : "Could not copy the frame to the clipboard."
-    );
+    // Copy BEFORE opening the tab (clipboard writes need the page focused):
+    // it's the manual fallback if the auto-paste below doesn't take.
+    await chrome.tabs.sendMessage(tab.id, { type: "copy-image", dataUrl: frame }).catch(() => null);
+    const newTab = await chrome.tabs.create({ url: engineUrl });
+    injectFrameOnLoad(newTab.id, frame);
+    notify("AnyDownload", "Searching the frame — if nothing loads, press Cmd+V (it's in the clipboard).");
   } catch (e) {
     notify("AnyDownload", `Frame capture failed: ${String(e).slice(0, 200)}`);
   }
+}
+
+// Once the engine page loads, feed it the frame as a synthetic paste event —
+// same mechanism the engines use for a real Cmd+V. Two attempts, because some
+// pages attach their paste listeners late.
+function injectFrameOnLoad(tabId, dataUrl) {
+  const listener = (id, changeInfo) => {
+    if (id !== tabId || changeInfo.status !== "complete") return;
+    chrome.tabs.onUpdated.removeListener(listener);
+    for (const delay of [1000, 3000]) {
+      setTimeout(() => {
+        chrome.scripting
+          .executeScript({ target: { tabId }, world: "MAIN", func: pasteFrame, args: [dataUrl] })
+          .catch(() => {});
+      }, delay);
+    }
+  };
+  chrome.tabs.onUpdated.addListener(listener);
+}
+
+// Runs in the engine page. Decodes the PNG without fetch() so strict CSPs
+// (Google) can't block it, then dispatches a paste carrying the file.
+function pasteFrame(dataUrl) {
+  if (window.__anydownloadPasted) return;
+  const b64 = dataUrl.split(",")[1];
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const file = new File([bytes], "frame.png", { type: "image/png" });
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  const ev = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true });
+  (document.activeElement || document.body).dispatchEvent(ev);
+  if (ev.defaultPrevented) window.__anydownloadPasted = true;
 }
 
 // Crop the viewport screenshot down to the media element's box (CSS px * devicePixelRatio).
