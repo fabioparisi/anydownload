@@ -1,5 +1,6 @@
 {
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh1QKxFj5yTpbuQ4v5NzELhp59+R0/NmjMpsvEEl8zTEGSDDr3DHixYzMtfW9+YDbyx/qooW/fLMvR17Uy4kNmOqsc+05e1w4vEGGgABCYvT+BeKwUUcEC0CVZA3njHx9Makn6D8PbDBp+Yw3ozi21lKbL/MgoyxdvgZr0Iyme4Qw3mdABCE7/khT9WHEVYivorIK9Y3+cs1qd+JZyukS0XnDo2LHr0rULe+DlCQmp5fW+VCMgK/PPV1pSKayVPBWyx3I/EAdh692Evv7lXGjHAySU1q5tWZat/etAOL45Wt+mu9H9ccYCxy7HH5NiVcKOkdoLtkIXggCgRNi08lmeQIDAQAB",
   "name": "AnyDownload",
   "version": "1.0.0",
   "description": "Right-click any video or audio - even under overlays or on sites that block the context menu - to open, copy or download it with yt-dlp.",

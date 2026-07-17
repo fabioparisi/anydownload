@@ -37,25 +37,21 @@ Chrome extensions can't run local programs directly, so downloads go through a t
 - `yt-dlp` and `ffmpeg`: `brew install yt-dlp ffmpeg`
 - Python 3 (the system one is fine — the host uses only the standard library)
 
-## Install (human)
+## Install
 
-1. Clone this repo:
+One command:
 
-   ```bash
-   git clone https://github.com/fabioparisi/anydownload.git
-   cd anydownload
-   ```
+```bash
+curl -fsSL https://raw.githubusercontent.com/fabioparisi/anydownload/main/install.sh | bash
+```
 
-2. Open `chrome://extensions` → enable **Developer mode** (top right) → **Load unpacked** → select the cloned folder.
-3. Copy the extension ID shown on the AnyDownload card (a 32-letter string), then:
+It clones the repo to `~/anydownload`, installs `yt-dlp`/`ffmpeg` via Homebrew if missing, registers the native host, and opens `chrome://extensions` plus the folder in Finder. Then there is **one click Chrome refuses to automate**:
 
-   ```bash
-   ./install.sh <EXTENSION_ID>
-   ```
+> In the `chrome://extensions` tab: enable **Developer mode** (top right) → **Load unpacked** → select the `anydownload` folder that just opened in Finder.
 
-4. Back in `chrome://extensions`, hit the reload arrow on the AnyDownload card. Done — right-click any video to test.
+Done — right-click any video to test. No extension ID to copy, no reload: the `key` field in `manifest.json` pins the extension to the same ID (`eagdongheofjndbgdefbjhfiejannkok`) on every machine, so the native host is pre-authorized before the extension even loads.
 
-`install.sh` writes the native-host manifest to `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anydownload.ytdlp.json`, pointing at `host/anydownload_host.py` and allowed only for your extension ID.
+Already cloned it yourself? Just run `./install.sh` from the folder — same thing, no arguments.
 
 ## Install (AI agent — Claude Code, Codex, etc.)
 
@@ -66,37 +62,20 @@ Paste this to your agent:
 <details>
 <summary><b>AGENT INSTALL — exact steps for an LLM agent</b></summary>
 
-Follow these steps in order. Steps 1–2 and 5 are shell commands you run yourself; steps 3–4 need the user because loading an unpacked extension is a GUI action in Chrome.
+Everything is automated except one GUI click that Chrome does not allow scripting.
 
-1. **Check prerequisites** (install any that are missing):
+1. **Run the installer** (idempotent — safe to re-run):
 
    ```bash
-   command -v yt-dlp || brew install yt-dlp
-   command -v ffmpeg || brew install ffmpeg
+   curl -fsSL https://raw.githubusercontent.com/fabioparisi/anydownload/main/install.sh | bash
    ```
 
-2. **Clone the repo** somewhere permanent — NOT a temp dir. Chrome loads the extension and the native host from this folder forever, so if it gets deleted the tool breaks:
+   It clones to `~/anydownload` (a permanent location — Chrome loads the extension from there forever, so never use a temp dir), installs `yt-dlp`/`ffmpeg` via Homebrew if missing, registers the native messaging host for the fixed extension ID `eagdongheofjndbgdefbjhfiejannkok` (pinned by the `key` field in `manifest.json` — do NOT ask the user for an ID), and opens `chrome://extensions` and the folder in Finder.
+
+2. **Verify the host works** without Chrome:
 
    ```bash
-   git clone https://github.com/fabioparisi/anydownload.git ~/anydownload
-   ```
-
-3. **Ask the user to load the extension** (you cannot do this step): tell them to open `chrome://extensions`, enable **Developer mode** (toggle, top right), click **Load unpacked**, and select the cloned `anydownload` folder.
-
-4. **Get the extension ID**: ask the user to copy the ID shown on the AnyDownload card (32 lowercase letters, e.g. `abcdefghijklmnopqrstuvwxyzabcdef`). There is no reliable way to read an unpacked extension's ID from disk — the user's copy-paste is the correct path, just ask for it.
-
-5. **Register the native messaging host** with the ID from step 4:
-
-   ```bash
-   cd ~/anydownload && ./install.sh <EXTENSION_ID>
-   ```
-
-   Expected output: `Installed: ~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anydownload.ytdlp.json`
-
-6. **Verify the host works** without Chrome (should print an "invalid request" error object — that means the stdio protocol is alive):
-
-   ```bash
-   python3 -c "
+   cd ~/anydownload && python3 -c "
    import json,struct,subprocess
    d=json.dumps({'url':'ftp://x','format':'best'}).encode()
    p=subprocess.run(['./host/anydownload_host.py'],input=struct.pack('<I',len(d))+d,capture_output=True)
@@ -104,12 +83,14 @@ Follow these steps in order. Steps 1–2 and 5 are shell commands you run yourse
    "
    ```
 
-   Expected: `{'ok': False, 'error': 'invalid request'}`
+   Expected: `{'ok': False, 'error': 'invalid request'}` — that means the stdio protocol is alive.
 
-7. **Tell the user to reload the extension** (reload arrow on the AnyDownload card in `chrome://extensions`) and test: right-click any video → **AnyDownload ▸ Download (best quality)**. The file lands in `~/Downloads` and a Chrome notification confirms completion.
+3. **Ask the user for the one manual click** (you cannot do this step): in the `chrome://extensions` tab that just opened, enable **Developer mode** (toggle, top right), click **Load unpacked**, and select the `anydownload` folder that just opened in Finder. No reload needed afterwards — the host is already authorized.
+
+4. **Tell the user to test**: right-click any video → **AnyDownload ▸ Download (best quality)**. The file lands in `~/Downloads` and a Chrome notification confirms completion.
 
 Troubleshooting:
-- Notification says "Native host not reachable" → the extension ID in `com.anydownload.ytdlp.json` doesn't match, or the extension wasn't reloaded after `install.sh`. Re-run step 5 with the correct ID, then reload.
+- Notification says "Native host not reachable" → re-run step 1, then check that `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anydownload.ytdlp.json` exists and points at an existing `anydownload_host.py`.
 - Download fails on a specific site → run `yt-dlp <page-url>` manually in a terminal to see the real error; usually it's a site yt-dlp doesn't support or DRM.
 
 </details>
