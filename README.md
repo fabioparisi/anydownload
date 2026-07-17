@@ -15,13 +15,19 @@ Right-click menu
     ├── Copy media URL
     ├── Download (best quality)
     ├── Download as MP4
-    └── Extract audio (MP3)
+    ├── Extract audio (MP3)
+    └── Search video frame in… ▸
+        ├── Google Lens
+        ├── Yandex Images
+        ├── Bing Visual Search
+        └── TinEye
 ```
 
 - Finds the `<video>`/`<audio>` element under the cursor with `elementsFromPoint()` + `composedPath()`, so overlays, custom controls and Shadow DOM don't hide it.
 - Re-enables the native context menu on sites that block right-click (only when media is actually under the cursor).
 - Direct `.mp4`/`.mp3` sources are used as-is; `blob:` and MSE streams fall back to handing the **page URL** to yt-dlp, which resolves the real stream for any of its [thousands of supported sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
 - Downloads land in `~/Downloads`, with a Chrome notification on completion.
+- **Reverse video search**: no public search engine accepts a video as a query, so AnyDownload does what actually works — it screenshots the current frame of the player under the cursor, copies it to your clipboard, and opens the chosen image engine so you can paste it (Cmd+V). Great for finding the original source, a higher-resolution version, or the full video (Yandex is usually the strongest at tracing video frames back to their source).
 
 Chrome extensions can't run local programs directly, so downloads go through a tiny [Native Messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host (stdlib-only Python, ~80 lines) that runs `yt-dlp` with the URL passed as a plain argument — never through a shell.
 

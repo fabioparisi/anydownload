@@ -19,10 +19,23 @@ const MENUS = [
   ["dl-mp3", "Extract audio (MP3)"],
 ];
 
+// Reverse "video" search = reverse image search on the current frame.
+// The frame is copied to the clipboard and the engine's paste-ready page opens.
+const ENGINES = [
+  ["search-lens", "Google Lens", "https://lens.google.com/"],
+  ["search-yandex", "Yandex Images", "https://yandex.com/images/"],
+  ["search-bing", "Bing Visual Search", "https://www.bing.com/visualsearch"],
+  ["search-tineye", "TinEye", "https://tineye.com/"],
+];
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({ id: "parent", title: "AnyDownload", contexts: ["all"] });
   for (const [id, title] of MENUS) {
     chrome.contextMenus.create({ id, parentId: "parent", title, contexts: ["all"] });
+  }
+  chrome.contextMenus.create({ id: "search", parentId: "parent", title: "Search video frame in…", contexts: ["all"] });
+  for (const [id, title] of ENGINES) {
+    chrome.contextMenus.create({ id, parentId: "search", title, contexts: ["all"] });
   }
 });
 
@@ -36,6 +49,8 @@ function resolveUrl(info, tab) {
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  const engine = ENGINES.find(([id]) => id === info.menuItemId);
+  if (engine) return searchFrame(tab, engine[2]);
   const url = resolveUrl(info, tab);
   if (!url) return notify("AnyDownload", "No media or URL found here.");
   switch (info.menuItemId) {
@@ -83,6 +98,41 @@ function download(url, format) {
     }
   });
   port.postMessage({ action: "download", url, format });
+}
+
+async function searchFrame(tab, engineUrl) {
+  try {
+    const m = mediaUnderCursor.get(tab.id);
+    const shot = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
+    const frame = m?.rect ? await crop(shot, m.rect, m.dpr || 1) : shot;
+    // Copy BEFORE opening the tab: clipboard writes need the page focused.
+    const r = await chrome.tabs.sendMessage(tab.id, { type: "copy-image", dataUrl: frame }).catch(() => null);
+    await chrome.tabs.create({ url: engineUrl });
+    notify(
+      "AnyDownload",
+      r?.ok ? "Frame copied — paste it (Cmd+V) into the search page." : "Could not copy the frame to the clipboard."
+    );
+  } catch (e) {
+    notify("AnyDownload", `Frame capture failed: ${String(e).slice(0, 200)}`);
+  }
+}
+
+// Crop the viewport screenshot down to the media element's box (CSS px * devicePixelRatio).
+async function crop(dataUrl, rect, dpr) {
+  const bmp = await createImageBitmap(await (await fetch(dataUrl)).blob());
+  const x = Math.max(0, rect.x * dpr);
+  const y = Math.max(0, rect.y * dpr);
+  const w = Math.max(1, Math.min(rect.width * dpr, bmp.width - x));
+  const h = Math.max(1, Math.min(rect.height * dpr, bmp.height - y));
+  const canvas = new OffscreenCanvas(w, h);
+  canvas.getContext("2d").drawImage(bmp, x, y, w, h, 0, 0, w, h);
+  const blob = await canvas.convertToBlob({ type: "image/png" });
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
+  });
 }
 
 function notify(title, message) {

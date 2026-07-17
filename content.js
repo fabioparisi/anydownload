@@ -21,13 +21,17 @@ window.addEventListener(
   "contextmenu",
   (e) => {
     const media = findMedia(e.clientX, e.clientY, e.composedPath());
-    const info = media
-      ? {
-          kind: media.tagName.toLowerCase(),
-          src: media.currentSrc || media.src || null,
-          pageUrl: location.href,
-        }
-      : null;
+    let info = null;
+    if (media) {
+      const r = media.getBoundingClientRect();
+      info = {
+        kind: media.tagName.toLowerCase(),
+        src: media.currentSrc || media.src || null,
+        pageUrl: location.href,
+        rect: { x: r.x, y: r.y, width: r.width, height: r.height },
+        dpr: window.devicePixelRatio || 1,
+      };
+    }
     try {
       chrome.runtime.sendMessage({ type: "media-under-cursor", media: info });
     } catch (_) {
@@ -47,6 +51,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "copy") {
     navigator.clipboard
       .writeText(msg.text)
+      .then(() => sendResponse({ ok: true }))
+      .catch((err) => sendResponse({ ok: false, error: String(err) }));
+    return true;
+  }
+  if (msg.type === "copy-image") {
+    fetch(msg.dataUrl)
+      .then((r) => r.blob())
+      .then((b) => navigator.clipboard.write([new ClipboardItem({ "image/png": b })]))
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));
     return true;
