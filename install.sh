@@ -37,14 +37,21 @@ for bin in yt-dlp ffmpeg; do
   fi
 done
 
-# 3. Register the native messaging host
-chmod +x "$DIR/host/anydownload_host.py"
+# 3. Register the native messaging host.
+# The host script is COPIED out of the repo: if the repo lives in a
+# TCC-protected folder (Documents, Desktop, Downloads), macOS blocks Chrome's
+# child process from reading it ("Operation not permitted") and every download
+# fails with "Native host has exited". ~/Library/Application Support is safe.
+HOST_DIR="$HOME/Library/Application Support/AnyDownload"
+mkdir -p "$HOST_DIR"
+cp "$DIR/host/anydownload_host.py" "$HOST_DIR/anydownload_host.py"
+chmod +x "$HOST_DIR/anydownload_host.py"
 mkdir -p "$TARGET_DIR"
 cat > "$TARGET_DIR/$HOST_NAME.json" <<EOF
 {
   "name": "$HOST_NAME",
   "description": "yt-dlp bridge for the AnyDownload extension",
-  "path": "$DIR/host/anydownload_host.py",
+  "path": "$HOST_DIR/anydownload_host.py",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://$EXT_ID/"]
 }
